@@ -120,6 +120,11 @@ class CreatePurchaseOrderRequest(BaseModel):
     expected_delivery_date: str
     notes: Optional[str] = None
 
+class CreateOrderRequest(BaseModel):
+    items: List[dict]  # [{ sku, name, quantity, unit_price }]
+    warehouse: Optional[str] = None
+    category: Optional[str] = None
+
 # API endpoints
 @app.get("/")
 def root():
@@ -160,6 +165,36 @@ def get_order(order_id: str):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
+
+@app.post("/api/orders", response_model=Order, status_code=201)
+def create_order(request: CreateOrderRequest):
+    """Create a new restocking order"""
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone.utc)
+    # Find the highest existing RST number to avoid collisions on repeated submissions
+    rst_numbers = [
+        int(o["order_number"].split("-")[-1])
+        for o in orders
+        if o["order_number"].startswith("RST-")
+    ]
+    next_num = (max(rst_numbers) + 1) if rst_numbers else 1
+    new_order = {
+        "id": str(len(orders) + 1),
+        "order_number": f"RST-{now.year}-{next_num:04d}",
+        "customer": "Internal Restock",
+        "items": request.items,
+        "status": "Processing",
+        "order_date": now.isoformat(),
+        "expected_delivery": (now + timedelta(days=7)).isoformat(),
+        "total_value": round(
+            sum(i.get("quantity", 0) * i.get("unit_price", 0) for i in request.items), 2
+        ),
+        "actual_delivery": None,
+        "warehouse": request.warehouse,
+        "category": request.category,
+    }
+    orders.append(new_order)
+    return new_order
 
 @app.get("/api/demand", response_model=List[DemandForecast])
 def get_demand_forecasts():

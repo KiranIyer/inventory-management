@@ -6,6 +6,7 @@ export default {
     orders: 'Orders',
     finance: 'Finance',
     demandForecast: 'Demand Forecast',
+    restocking: 'Restocking',
     companyName: 'Catalyst Components',
     subtitle: 'Inventory Management System'
   },
@@ -106,6 +107,9 @@ export default {
     title: 'Orders',
     description: 'View and manage customer orders',
     allOrders: 'All Orders',
+    submittedOrders: 'Submitted Restocking Orders',
+    leadTime: 'Lead Time',
+    leadTimeDays: '{days} days',
     totalOrders: 'Total Orders',
     totalRevenue: 'Total Revenue',
     avgOrderValue: 'Avg Order Value',
@@ -164,6 +168,33 @@ export default {
       vendor: 'Vendor',
       date: 'Date',
       amount: 'Amount'
+    }
+  },
+
+  // Restocking
+  restocking: {
+    title: 'Restocking',
+    description: 'Plan and submit restocking orders based on demand forecasts',
+    budgetLabel: 'Restocking Budget',
+    budgetHint: 'Drag to set maximum spend for this restocking order',
+    autoFitLabel: 'Recommended Items',
+    itemsSelected: '{count} items selected',
+    estimatedTotal: 'Estimated Total',
+    remainingBudget: 'Remaining Budget',
+    placeOrder: 'Place Restocking Order',
+    orderSuccess: 'Restocking order submitted successfully',
+    orderError: 'Failed to submit restocking order',
+    noForecasts: 'No demand forecasts available',
+    table: {
+      select: 'Select',
+      sku: 'SKU',
+      itemName: 'Item Name',
+      trend: 'Trend',
+      currentDemand: 'Current Demand',
+      forecastedDemand: 'Forecasted Demand',
+      qtyToOrder: 'Qty to Order',
+      unitCost: 'Unit Cost',
+      lineTotal: 'Line Total'
     }
   },
 

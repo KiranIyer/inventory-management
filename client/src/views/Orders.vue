@@ -29,7 +29,7 @@
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('orders.allOrders') }} ({{ orders.length }})</h3>
+          <h3 class="card-title">{{ t('orders.allOrders') }} ({{ regularOrders.length }})</h3>
         </div>
         <div class="table-container">
           <table class="orders-table">
@@ -45,7 +45,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id">
+              <tr v-for="order in regularOrders" :key="order.id">
                 <td class="col-order-number"><strong>{{ order.order_number }}</strong></td>
                 <td class="col-customer">{{ translateCustomerName(order.customer) }}</td>
                 <td class="col-items">
@@ -68,6 +68,54 @@
                 </td>
                 <td class="col-date">{{ formatDate(order.order_date) }}</td>
                 <td class="col-date">{{ formatDate(order.expected_delivery) }}</td>
+                <td class="col-value"><strong>{{ currencySymbol }}{{ order.total_value.toLocaleString() }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" v-if="submittedRestockingOrders.length > 0">
+        <div class="card-header">
+          <h3 class="card-title">{{ t('orders.submittedOrders') }} ({{ submittedRestockingOrders.length }})</h3>
+        </div>
+        <div class="table-container">
+          <table class="orders-table restock-table">
+            <thead>
+              <tr>
+                <th class="col-order-number">{{ t('orders.table.orderNumber') }}</th>
+                <th class="col-items">{{ t('orders.table.items') }}</th>
+                <th class="col-status">{{ t('orders.table.status') }}</th>
+                <th class="col-date">{{ t('orders.table.orderDate') }}</th>
+                <th class="col-date">{{ t('orders.table.expectedDelivery') }}</th>
+                <th class="col-lead-time">{{ t('orders.table.leadTime') }}</th>
+                <th class="col-value">{{ t('orders.table.totalValue') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="order in submittedRestockingOrders" :key="order.id">
+                <td class="col-order-number"><strong>{{ order.order_number }}</strong></td>
+                <td class="col-items">
+                  <details class="items-details">
+                    <summary class="items-summary">
+                      {{ t('orders.itemsCount', { count: order.items.length }) }}
+                    </summary>
+                    <div class="items-dropdown">
+                      <div v-for="(item, idx) in order.items" :key="idx" class="item-entry">
+                        <span class="item-name">{{ translateProductName(item.name) }}</span>
+                        <span class="item-meta">{{ t('orders.quantity') }}: {{ item.quantity }} @ {{ currencySymbol }}{{ item.unit_price }}</span>
+                      </div>
+                    </div>
+                  </details>
+                </td>
+                <td class="col-status">
+                  <span :class="['badge', getOrderStatusClass(order.status)]">
+                    {{ t(`status.${order.status.toLowerCase()}`) }}
+                  </span>
+                </td>
+                <td class="col-date">{{ formatDate(order.order_date) }}</td>
+                <td class="col-date">{{ formatDate(order.expected_delivery) }}</td>
+                <td class="col-lead-time">{{ t('orders.leadTimeDays', { days: leadTimeDays(order) }) }}</td>
                 <td class="col-value"><strong>{{ currencySymbol }}{{ order.total_value.toLocaleString() }}</strong></td>
               </tr>
             </tbody>
@@ -129,6 +177,24 @@ export default {
       loadOrders()
     })
 
+    // Regular customer orders (excludes RST- prefixed restocking orders)
+    const regularOrders = computed(() =>
+      orders.value.filter(o => !o.order_number.startsWith('RST-'))
+    )
+
+    // Orders submitted from the Restocking tab (identified by RST- prefix)
+    const submittedRestockingOrders = computed(() =>
+      orders.value.filter(o => o.order_number.startsWith('RST-'))
+    )
+
+    const leadTimeDays = (order) => {
+      const d1 = new Date(order.order_date)
+      const d2 = new Date(order.expected_delivery)
+      if (isNaN(d1) || isNaN(d2)) return '—'
+      // 86400000ms = 1 day; calculate difference in whole days
+      return Math.round((d2 - d1) / 86400000)
+    }
+
     const getOrdersByStatus = (status) => {
       return orders.value.filter(order => order.status === status)
     }
@@ -160,6 +226,9 @@ export default {
       loading,
       error,
       orders,
+      regularOrders,
+      submittedRestockingOrders,
+      leadTimeDays,
       getOrdersByStatus,
       getOrderStatusClass,
       formatDate,
@@ -199,8 +268,21 @@ export default {
   width: 140px;
 }
 
+.col-lead-time {
+  width: 110px;
+}
+
 .col-value {
   width: 120px;
+}
+
+/* Restocking orders table has no customer column — redistribute widths */
+.restock-table .col-order-number {
+  width: 150px;
+}
+
+.restock-table .col-items {
+  width: 220px;
 }
 
 /* Items details styling */
