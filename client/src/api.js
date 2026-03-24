@@ -33,6 +33,12 @@ export const api = {
     return response.data
   },
 
+  async createOrder(orderData) {
+    // orderData: { items, warehouse, category }
+    const response = await axios.post(`${API_BASE_URL}/orders`, orderData)
+    return response.data
+  },
+
   async getDemandForecasts() {
     const response = await axios.get(`${API_BASE_URL}/demand`)
     return response.data
